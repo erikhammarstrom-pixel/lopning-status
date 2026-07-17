@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Löpning – Erik Hammarström</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
+<style>
+  :root { color-scheme: light; --bg:#ffffff; --panel:#f7f7f5; --border:#e5e3de; --ink:#1f1e1c; --muted:#6b6863;
+    --accent:#c1622d; --green:#2f7d4f; --green-bg:#e8f3ec; --yellow:#a3760a; --yellow-bg:#fbf1dc; --red:#b3402f; --red-bg:#fbeae6; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; font-size:14px; line-height:1.5; }
+  header { padding:20px 24px 0 24px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg); z-index:10; }
+  header h1 { margin:0 0 2px 0; font-size:20px; }
+  header .sub { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  nav { display:flex; gap:4px; flex-wrap:wrap; }
+  nav button { background:none; border:none; border-bottom:2px solid transparent; padding:10px 14px; font-size:13.5px; font-weight:500; color:var(--muted); cursor:pointer; font-family:inherit; }
+  nav button:hover { color:var(--ink); }
+  nav button.active { color:var(--accent); border-bottom-color:var(--accent); }
+  main { padding:20px 24px 40px 24px; max-width:980px; margin:0 auto; }
+  section { display:none; }
+  section.active { display:block; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; margin-bottom:20px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .card .label { font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; }
+  .card .value { font-size:22px; font-weight:600; }
+  .card .note { font-size:12px; color:var(--muted); margin-top:2px; }
+  .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-weight:600; font-size:12px; }
+  .badge.green { background:var(--green-bg); color:var(--green); }
+  .badge.yellow { background:var(--yellow-bg); color:var(--yellow); }
+  .badge.red { background:var(--red-bg); color:var(--red); }
+  h2 { font-size:17px; margin:26px 0 10px 0; }
+  h2:first-child { margin-top:0; }
+  h3 { font-size:14.5px; margin:18px 0 8px 0; }
+  p { margin:6px 0; }
+  table { width:100%; border-collapse:collapse; font-size:12.8px; margin-bottom:10px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.02em; }
+  tr.current-week { background:#fdf0e7; }
+  tr.current-week td:first-child { font-weight:700; color:var(--accent); }
+  .plan-table td { font-size:12.2px; }
+  .pill { display:inline-block; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:1px 6px; font-size:11px; color:var(--muted); }
+  .box { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:14px; }
+  .box.snap { border-color:#d8c8b8; }
+  .snap-tag { font-size:10.5px; color:var(--accent); text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+  .chart-wrap { position:relative; height:280px; margin-bottom:18px; }
+  .muted { color:var(--muted); }
+  .footer-note { color:var(--muted); font-size:12px; margin-top:30px; border-top:1px solid var(--border); padding-top:12px; }
+  ul.tight { margin:6px 0; padding-left:20px; }
+  ul.tight li { margin-bottom:4px; }
+  .flex { display:flex; gap:10px; flex-wrap:wrap; }
+  .grow { flex:1; min-width:260px; }
+  a.navlink { color:var(--accent); cursor:pointer; text-decoration:none; font-weight:600; }
+  a.navlink:hover { text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Löpning – Erik Hammarström</h1>
+  <div class="sub">Malmö halvmara 3 okt 2026 · mål sub 1:24 &nbsp;·&nbsp; <span class="pill">Statisk ögonblicksbild, byggd 17 jul 2026</span></div>
+  <nav id="nav">
+    <button data-tab="start" class="active">Start</button>
+    <button data-tab="plan">Träningsplanering</button>
+    <button data-tab="vo2max">VO2max-utveckling</button>
+    <button data-tab="zoner">Tempo i pulszoner över tid</button>
+    <button data-tab="analys">Analys och veckoavstämningar</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- START -->
+<section id="tab-start" class="active">
+  <h2>Läget den 17 juli 2026</h2>
+  <div class="cards" id="countdownCards"></div>
+
+  <div class="box snap">
+    <div class="snap-tag">Ögonblicksbild från Garmin, 17 jul 2026</div>
+    <div class="cards" style="margin-top:10px; margin-bottom:0;">
+      <div class="card"><div class="label">VO2max (16 jul)</div><div class="value">56</div></div>
+      <div class="card"><div class="label">ACWR</div><div class="value">1,2</div><div class="note">OPTIMAL</div></div>
+      <div class="card"><div class="label">Träningsstatus</div><div class="value" style="font-size:16px;">PRODUCTIVE_2</div></div>
+      <div class="card"><div class="label">HRV inatt</div><div class="value">61 ms</div><div class="note">UNBALANCED (baslinje 57–77)</div></div>
+    </div>
+  </div>
+
+  <h2>Mål</h2>
+  <table>
+    <tr><td style="width:160px" class="muted">Huvudmål</td><td>Malmö halvmara, <strong>3 okt 2026 — sub 1:24:00</strong> (≈3:58/km)</td></tr>
+    <tr><td class="muted">Delmål/test</td><td>10 km sub 39:00 (≈3:53/km), ca 19–20 sep, formkontroll</td></tr>
+    <tr><td class="muted">Långsiktigt</td><td>Hannovermaraton ~apr 2027 — måste 3:00, riktigt bra 2:57, dröm 2:53:30 (slå PB 2:53:40 från 2017)</td></tr>
+  </table>
+
+  <h2>Utgångsläge (baslinjer)</h2>
+  <div class="cards">
+    <div class="card"><div class="label">VO2max</div><div class="value">57</div><div class="note">topp 61 nov-25</div></div>
+    <div class="card"><div class="label">Vilopuls</div><div class="value">~45</div><div class="note">stabil baslinje</div></div>
+    <div class="card"><div class="label">Tröskelpuls</div><div class="value">160–163</div><div class="note">maxpuls ~184 (uppskattad)</div></div>
+    <div class="card"><div class="label">VDOT</div><div class="value">~53</div><div class="note">mål ~55</div></div>
+  </div>
+
+  <h2>Senaste formella avstämning</h2>
+  <p><span class="badge yellow">GULT</span> &nbsp;12 jul 2026 — se <a class="navlink" data-tab="analys">Analys och veckoavstämningar</a> för full bedömning.</p>
+
+  <p class="muted" style="margin-top:22px;">Begränsande faktor: vänster hälsena/akilles (DNF maj-25). Excentriska vadlyft dagligen, kontrollerad upptrappning.</p>
+</section>
+
+<!-- TRÄNINGSPLANERING -->
+<section id="tab-plan">
+  <h2>13-veckorsblocket – 6 jul till 3 okt 2026</h2>
+  <p class="muted">6 löppass + 2 styrkepass/vecka. Aktuell vecka (utifrån 17 jul 2026) är markerad. Källa: <span class="pill">Malmo_halvmara_plan_2026.xlsx</span></p>
+
+  <div style="overflow-x:auto;">
+  <table class="plan-table" id="planTable">
+    <thead>
+      <tr><th>Vecka</th><th>Mån</th><th>Tis</th><th>Ons</th><th>Tors</th><th>Fre</th><th>Lör</th><th>Sön</th><th>Km</th></tr>
+    </thead>
+    <tbody id="planTbody"></tbody>
+  </table>
+  </div>
+  <p class="muted" id="planFocusNote"></p>
+
+  <h2>Fasöversikt</h2>
+  <table>
+    <thead><tr><th>Fas</th><th>Veckor</th><th>Fokus</th><th>Volym (km/v)</th></tr></thead>
+    <tbody>
+      <tr><td>1. Basåterställning</td><td>v.1–4</td><td>Lugn volym + stridar; sub-threshold från v.3</td><td>52 → 65</td></tr>
+      <tr><td>2. Tröskelutveckling</td><td>v.5–8</td><td>Två sub-threshold-pass/v, växande långpass</td><td>71 → 76</td></tr>
+      <tr><td>3. Skärpning</td><td>v.9–11</td><td>VO2max + HM-specifikt, 10k-test</td><td>76 → 77</td></tr>
+      <tr><td>4. Tapering &amp; lopp</td><td>v.12–13</td><td>Sänkt volym, bibehållen skärpa, Malmö 3/10</td><td>57 → lopp</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Bärande principer</h2>
+  <ul class="tight">
+    <li>Bygg om den lugna basen — den kollapsade i våras. Lätt ska vara riktigt lätt.</li>
+    <li>Norsk sub-threshold som motor: mängd kvalitet strax under tröskeln (puls ≤163), låg trötthetskostnad.</li>
+    <li>80/20: ~80% lugnt, ~20% hårt. Ingen gråzon.</li>
+    <li>Kontrollerad upptrappning för hälsenan: max ~10% volymökning/vecka, avlastning v.4 &amp; v.8, excentriska vadlyft.</li>
+    <li>Tröskeltempot autoregleras varje vecka utifrån pulssvar (höj ≤158 / håll 159–163 / sänk &gt;163).</li>
+  </ul>
+
+  <h2>Styrka – 2 pass/vecka</h2>
+  <p class="muted">Block 1 (v.1–4): kettlebell + kroppsvikt. Block 2 (v.5–13): + skivstång/hantlar. Pass A = styrka/kraft, Pass B = stabilitet/prehab.</p>
+  <div class="flex">
+    <div class="grow box">
+      <h3>Pass A – styrka/kraft (block 1)</h3>
+      <ul class="tight">
+        <li>Goblet squat (KB) — 3×8</li>
+        <li>Rumänsk marklyft (KB) — 3×8</li>
+        <li>Kettlebell swing — 3×12</li>
+        <li>Bulgarisk split squat (KB) — 3×8/ben</li>
+        <li>Planka — 3×40s</li>
+      </ul>
+    </div>
+    <div class="grow box">
+      <h3>Pass B – stabilitet/prehab (block 1)</h3>
+      <ul class="tight">
+        <li>Enbens rumänsk marklyft (KB) — 3×8/ben</li>
+        <li>Höftlyft/glute bridge — 3×12</li>
+        <li>Sidoplanka — 3×30s/sida</li>
+        <li>Clamshells — 3×15/sida</li>
+        <li>Bird-dog — 3×10/sida</li>
+        <li>Enbensstående balans — 3×30s/ben</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted">Excentriska vadlyft körs separat, dagligen — 2–3 dagar/v med vikt, övriga kroppsvikt. Kontrollerat (0–3 i smärta), inte värre dagen efter.</p>
+</section>
+
+<!-- VO2MAX -->
+<section id="tab-vo2max">
+  <h2>VO2max-utveckling sedan apr 2025</h2>
+  <div class="box snap">
+    <div class="snap-tag">Ögonblicksbild från Garmin, 17 jul 2026</div>
+    <p style="margin-top:6px;">VO2max: <strong>56</strong> (16 jul 2026) — jämfört med toppen 61 (nov-25) och baslinjen 57 (jun-26).</p>
+  </div>
+  <div class="chart-wrap"><canvas id="vo2Chart"></canvas></div>
+  <p class="muted">Topp 61 (nov-25) efter stor lugn bas ("productive"). Föll till 56–57 under vårens överbelastning (mar–jun 26). Uppföljningsmarkör: VO2max ska vända uppåt mot 60+ under blocket — stagnation/fall = för hårt, för lite vila.</p>
+</section>
+
+<!-- PULSZONER -->
+<section id="tab-zoner">
+  <h2>Tempo i pulszoner över tid</h2>
+  <p class="muted">Minuter per pulszon och månad (Karvonen/pulsreserv, vila ~45, uppskattad maxpuls 184). Källa: Garmin hrTimeInZone, summerat per månad.</p>
+  <div class="chart-wrap"><canvas id="zoneChart"></canvas></div>
+
+  <h3>Zondefinitioner</h3>
+  <table>
+    <thead><tr><th>Zon</th><th>% pulsreserv</th><th>Puls (bpm)</th><th>Motsvarar</th></tr></thead>
+    <tbody>
+      <tr><td>Zon 1 – Återhämtning</td><td>50–60%</td><td>114–128</td><td>Djup återhämtning</td></tr>
+      <tr><td>Zon 2 – Lätt aerob</td><td>60–70%</td><td>128–142</td><td>Mål: merparten av lugna pass</td></tr>
+      <tr><td>Zon 3 – Aerob/tempo</td><td>70–80%</td><td>142–156</td><td>Övre delen av "lugnt"</td></tr>
+      <tr><td>Zon 4 – Tröskel/HM-fart</td><td>80–90%</td><td>156–170</td><td>Tröskel + HM-fart</td></tr>
+      <tr><td>Zon 5 – VO2max/anaerobt</td><td>90–100%</td><td>170–184</td><td>VO2max-pass, stridar</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Tempo/puls per passtyp</h3>
+  <table>
+    <thead><tr><th>Pass/zon</th><th>Tempo (min/km)</th><th>Puls (bpm)</th><th>Känsla</th></tr></thead>
+    <tbody>
+      <tr><td>Återhämtning</td><td>5:15–5:40</td><td>&lt;140</td><td>Mycket lätt, prata fritt</td></tr>
+      <tr><td>Lugnt/distans</td><td>4:55–5:20</td><td>140–150</td><td>Konversationstempo</td></tr>
+      <tr><td>Tröskel (sub)</td><td>4:00–4:08</td><td>158–163</td><td>Kontrollerat tungt, korta meningar</td></tr>
+      <tr><td>HM-fart (mål)</td><td>3:58</td><td>160–166</td><td>Ansträngande men jämnt</td></tr>
+      <tr><td>10k-fart</td><td>3:50–3:54</td><td>166–172</td><td>Hårt</td></tr>
+      <tr><td>VO2max/intervall</td><td>3:35–3:45</td><td>172–180</td><td>Mycket hårt</td></tr>
+      <tr><td>Stridar (15–20s)</td><td>~3:20-känsla</td><td>–</td><td>Avspänt snabb, ej maxa</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Senaste passen <span class="snap-tag" style="margin-left:6px;">Ögonblicksbild 17 jul</span></h3>
+  <table>
+    <thead><tr><th>Datum</th><th>Pass</th><th>Distans</th><th>Snittfart</th><th>Snittpuls</th><th>Träningseffekt</th></tr></thead>
+    <tbody>
+      <tr><td>2026-07-16</td><td>Norrtälje Löpning (8×1 min pickups)</td><td>8,01 km</td><td>4:51/km</td><td>148</td><td>LACTATE_THRESHOLD</td></tr>
+      <tr><td>2026-07-15</td><td>Norrtälje Löpning (9k + 6 stridar)</td><td>9,39 km</td><td>4:59/km</td><td>128</td><td>AEROBIC_BASE</td></tr>
+      <tr><td>2026-07-14</td><td>Norrtälje Löpning (9k + 8 stridar)</td><td>10,01 km</td><td>4:56/km</td><td>137</td><td>TEMPO</td></tr>
+      <tr><td>2026-07-13</td><td>Sollentuna Löpning</td><td>7,27 km</td><td>4:59/km</td><td>141</td><td>TEMPO</td></tr>
+      <tr><td>2026-07-12</td><td>Sollentuna Löpning (pickups)</td><td>8,39 km</td><td>4:52/km</td><td>146</td><td>LACTATE_THRESHOLD</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ANALYS -->
+<section id="tab-analys">
+  <h2>Läget den 17 juli 2026 <span class="snap-tag" style="margin-left:6px;">Ögonblicksbild</span></h2>
+  <div class="box snap">
+    <div class="cards" style="margin-bottom:0;">
+      <div class="card"><div class="label">VO2max (16 jul)</div><div class="value">56</div></div>
+      <div class="card"><div class="label">ACWR</div><div class="value">1,2</div><div class="note">OPTIMAL</div></div>
+      <div class="card"><div class="label">Träningsstatus</div><div class="value" style="font-size:16px;">PRODUCTIVE_2</div></div>
+      <div class="card"><div class="label">HRV inatt</div><div class="value">61 ms</div><div class="note">UNBALANCED (baslinje 57–77)</div></div>
+    </div>
+  </div>
+
+  <h2>Senaste veckoavstämning — 12 jul 2026 <span class="badge yellow" style="margin-left:8px;">GULT</span></h2>
+  <p class="muted">Vecka 1 (6–12 jul) av 13 mot Malmö halvmara. Fas: återstart – bara lugnt + stridar, inget tröskelpass än (första v.3, 20–26 juli).</p>
+
+  <h3>Nyckeltal</h3>
+  <ul class="tight">
+    <li>Vilopuls: 43–49 hela veckan (baslinje ~45) – normalt</li>
+    <li>HRV (12/7): snitt natt 63 ms, inom balanserat intervall (58–78), men Garmins trend flaggade ändå "UNBALANCED" — troligen känslig algoritm</li>
+    <li>Sömn: sömnbehovet krupit upp igen ("CHRONIC"), kvalitet 76/100 (FAIR), lite deep sleep</li>
+    <li>VO2max: 56 (från 57 – brus, ej oroande)</li>
+    <li>ACWR: 1,3 — Garmin klassar "OPTIMAL" men i övre delen av intervallet</li>
+  </ul>
+
+  <h3>Genomförda pass (6–12 jul)</h3>
+  <table>
+    <thead><tr><th>Dag</th><th>Pass</th><th>Distans</th><th>Snitt</th><th>Kommentar</th></tr></thead>
+    <tbody>
+      <tr><td>Mån 6/7</td><td>Lugnt</td><td>6,07 km</td><td>4:53/km</td><td>Enligt plan</td></tr>
+      <tr><td>Tis 7/7</td><td>Lugnt (Skärgårdsrunda)</td><td>8,21 km</td><td>5:07/km</td><td>Stridar ej gjorda</td></tr>
+      <tr><td>Ons 8/7</td><td>12k inkl 6 stridar + Styrka A</td><td>12,07 km</td><td>4:59/km</td><td>Längre än planerat, dubbelpass</td></tr>
+      <tr><td>Tors 9/7</td><td>Återhämtningsrunda</td><td>6,01 km</td><td>5:17/km</td><td>Pickups ej gjorda</td></tr>
+      <tr><td>Fre 10/7</td><td>Styrka B</td><td>–</td><td>–</td><td>Enligt plan</td></tr>
+      <tr><td>Lör 11/7</td><td>Första korta långpasset</td><td>14,02 km</td><td>4:59/km</td><td>Långpass flyttat hit</td></tr>
+      <tr><td>Sön 12/7</td><td>Pickups 8×1 min</td><td>8,39 km</td><td>~4:00/km</td><td>Föreskrivet 4:20–4:40/km — för snabbt</td></tr>
+    </tbody>
+  </table>
+  <p class="muted">Total ≈54,8 km mot planerade 52 km (+5%).</p>
+
+  <h3>Bedömning</h3>
+  <p>Volymen var i linje med planen — inte mängden som var problemet. Mönstret stack ut: långpasset flyttades till lördag och pickuppasset (kört klart snabbare än föreskrivet) hamnade dagen efter på söndagen — två relativt tunga dagar back-to-back rakt på den vävnad som redan är känd som begränsande (hälsenan). Höftstelhet dök upp efter just den kombinationen. Enligt principen "två samtidiga signaler = dra ner" är läget att hålla hårdare i strukturen kommande vecka.</p>
+
+  <h3>Rekommendationer</h3>
+  <ul class="tight">
+    <li>Kör veckans dagar i planerad ordning — flytta inte långpass/kvalitetspass tätt inpå varandra.</li>
+    <li>Pickups/stridar ska kännas kontrollerade — spara "ta ut sig"-känslan till tröskelblocket v.3 där pulstaket skyddar.</li>
+    <li>Bevaka hälsena och höft dagligen — vid kvarstående besvär, byt kvalpass mot lugnt/vila.</li>
+    <li>Fortsätt excentriska vadlyft dagligen.</li>
+  </ul>
+
+  <h2>Trend – historik (senaste avstämningarna)</h2>
+  <ul class="tight">
+    <li><strong>2026-07-07:</strong> Blockstart v.1. Flagga: pulsdrift på lugnt pass dag 1 (131→149 bpm).</li>
+    <li><strong>2026-07-08:</strong> GULT→GRÖNT. Pulsdisciplin förbättrad, sömnbehov tillbaka på baslinje.</li>
+    <li><strong>2026-07-12:</strong> GRÖNT→GULT. Ordning omkastad, öm hälsena + höftstelhet samtidigt, ACWR upp till 1,3. v.2-planen justerad (nedskalad pickup-progression, förstärkt pace-instruktion).</li>
+  </ul>
+
+  <p class="footer-note">Detta är en statisk, delbar version av löpstatus-sajten — byggd 17 juli 2026. Alla siffror (plan, veckoavstämning och Garmin-nyckeltal) är en ögonblicksbild från byggtillfället och uppdateras inte automatiskt. Be Claude bygga om filen när du vill ha en ny version.</p>
+</section>
+
+</main>
+
+<script>
+const tabs = ['start','plan','vo2max','zoner','analys'];
+function showTab(name){
+  tabs.forEach(t => document.getElementById('tab-'+t).classList.toggle('active', t===name));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.tab===name));
+  if(name==='vo2max' && window.vo2ChartInstance) window.vo2ChartInstance.resize();
+  if(name==='zoner' && window.zoneChartInstance) window.zoneChartInstance.resize();
+}
+document.getElementById('nav').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]');
+  if(b) showTab(b.dataset.tab);
+});
+document.querySelectorAll('a.navlink[data-tab]').forEach(a => a.addEventListener('click', () => showTab(a.dataset.tab)));
+
+const planWeeks = [
+  {n:1, start:'2026-07-06', dates:'6–12 jul', vol:'52', focus:'Återstart – bara lugnt + stridar (ingen tröskel än)',
+   d:['Lugnt 6 km + Styrka A','Lugnt 8 km + 8 stridar','Lugn distans 8 km + 6 stridar','Lugnt 8 km m. 8×1 min lätta pickups (ej tröskel)','Vila + Styrka B (lätt)','Lugnt 8 km','Långpass 14 km lugnt (5:00–5:15)']},
+  {n:2, start:'2026-07-13', dates:'13–19 jul', vol:'57', focus:'Lugn bas + stridar. OBS: behåll dagordningen, pickups strikt 4:20–4:40/km, hälsena+höft under uppsikt',
+   d:['Lugnt 7 km + Styrka A','Lugnt 9 km + 8 stridar','Lugn distans 9 km + 6 stridar','Lugnt 8 km m. 8×1 min pickups (håll 4:20–4:40/km – INTE snabbare)','Vila + Styrka B (lätt)','Lugnt 8 km','Långpass 16 km lugnt']},
+  {n:3, start:'2026-07-20', dates:'20–26 jul', vol:'65', focus:'Sub-threshold introduceras – sista basveckan före avlastning',
+   d:['Lugnt 8 km + Styrka A','Tröskel: 6×6 min @4:05, 75s vila (puls ≤162)','Lugn distans 10 km + 6 stridar','Tröskel: 4×8 min @4:05, 90s vila','Vila + Styrka B (lätt)','Lugnt 8 km + 6 stridar','Långpass 17 km lugnt']},
+  {n:4, start:'2026-07-27', dates:'27 jul–2 aug', vol:'52', focus:'AVLASTNING – smält in, kolla markörer',
+   d:['Lugnt 6 km + Styrka A','Tröskel: 4×6 min @4:05, 90s vila','Lugn distans 8 km','Lätt fartlek 8×1 min','Vila','Lugnt 7 km + 6 stridar','Långpass 14 km lugnt']},
+  {n:5, start:'2026-08-03', dates:'3–9 aug', vol:'71', focus:'Tröskelblocket startar',
+   d:['Lugnt 8 km + Styrka A','Tröskel: 5×6 min @4:03, 60–75s vila (puls ≤163)','Lugn distans 10 km + 6 stridar','Tröskel: 3×10 min @4:05, 2 min vila','Vila + Styrka B','Lugnt 9 km','Långpass 18 km, sista 3 km @4:10']},
+  {n:6, start:'2026-08-10', dates:'10–16 aug', vol:'76', focus:'Öka tröskelvolymen',
+   d:['Lugnt 8 km + Styrka A','Tröskel: 6×6 min @4:02, 60s vila','Lugn distans 10 km + 6 stridar','Tröskel: 4×10 min @4:03, 90s vila','Vila + Styrka B','Lugnt 9 km + 6 stridar','Långpass 20 km, sista 4 km @4:05']},
+  {n:7, start:'2026-08-17', dates:'17–23 aug', vol:'76', focus:'Toppvolym – norsk kort + lång tröskel',
+   d:['Lugnt 9 km + Styrka A','Norsk kort: 20×400 m @3:45, 30–40s jogg (puls ≤163)','Lugn distans 10 km + 6 stridar','Tröskel: 4×8 min @4:00, 90s vila','Vila + Styrka B','Lugnt 10 km','Långpass 22 km lugnt']},
+  {n:8, start:'2026-08-24', dates:'24–30 aug', vol:'60', focus:'AVLASTNING – ladda för skärpning',
+   d:['Lugnt 7 km + Styrka A','Tröskel: 5×6 min @4:02, 75s vila','Lugn distans 8 km','Lätt: 2×(6×400 m) @3:50','Vila','Lugnt 8 km + 6 stridar','Långpass 16 km lugnt']},
+  {n:9, start:'2026-08-31', dates:'31 aug–6 sep', vol:'76', focus:'VO2max kopplas på',
+   d:['Lugnt 8 km + Styrka A','VO2max: 5×1000 m @3:42, 2–2:30 jogg','Lugn distans 10 km + 6 stridar','Tröskel: 3×10 min @4:00, 2 min vila','Vila + Styrka B','Lugnt 9 km','Långpass 22 km m. 3×3 km @HM-fart']},
+  {n:10, start:'2026-09-07', dates:'7–13 sep', vol:'77', focus:'HM-specifik fart',
+   d:['Lugnt 8 km + Styrka A','VO2max: 6×1000 m @3:40, 2 min jogg','Lugn distans 9 km + 6 stridar','HM-specifikt: 4×3 km @3:58–4:00','Vila + Styrka B','Lugnt 8 km','Långpass 20 km lugnt']},
+  {n:11, start:'2026-09-14', dates:'14–20 sep', vol:'54', focus:'10k-TEST – formkontroll',
+   d:['Lugnt 7 km + 6 stridar + Styrka A (lätt)','Skärpa: 6×400 m @3:35, 90s jogg','Lugnt 7 km','Lugnt 6 km + 4 förloppstridar','Vila','LOPP: 10 km-test, mål sub 39:00','Lugnt 8–10 km mycket lätt']},
+  {n:12, start:'2026-09-21', dates:'21–27 sep', vol:'57', focus:'Tapering börjar – håll skärpan',
+   d:['Lugnt 7 km + Styrka A (lätt)','Tröskel: 3×8 min @4:00, 90s vila','Lugn distans 8 km + 6 stridar','HM-fart: 5×3 min @3:58, 90s vila + 4 stridar','Vila','Lugnt 7 km','Långpass 16 km lugnt']},
+  {n:13, start:'2026-09-28', dates:'28 sep–3 okt', vol:'lopp', focus:'LOPPVECKA – Malmö halvmara 3/10',
+   d:['Lugnt 6 km + 6 stridar','Skärpa: 4×4 min @4:00, 90s vila','Lugnt 5 km','Lugnt 4 km + 4 stridar','Vila (10 min lätt benröris)','🏁 MALMÖ HALVMARA – mål 1:24 (3:58/km)','Vila / lätt 20 min']},
+];
+
+const vo2History = [
+  ['2025-04',55.7],['2025-05',58.4],['2025-06',58.2],['2025-07',59.2],['2025-08',59.1],
+  ['2025-09',59.0],['2025-10',59.7],['2025-11',61.0],['2025-12',60.6],['2026-01',59.7],
+  ['2026-02',58.0],['2026-03',56.9],['2026-04',56.0],['2026-05',56.1],['2026-06',56.2],['2026-07',56.2]
+];
+
+const zoneHistory = [
+  {m:'2025-04', z:[11,148,254,418,40]}, {m:'2025-05', z:[26,165,388,352,128]}, {m:'2025-06', z:[4,42,78,36,7]},
+  {m:'2025-07', z:[7,150,343,71,14]}, {m:'2025-08', z:[16,110,242,240,92]}, {m:'2025-09', z:[15,169,324,251,46]},
+  {m:'2025-10', z:[15,227,413,247,4]}, {m:'2025-11', z:[26,439,622,279,49]}, {m:'2025-12', z:[17,254,433,326,59]},
+  {m:'2026-01', z:[7,117,487,446,145]}, {m:'2026-02', z:[6,49,393,711,190]}, {m:'2026-03', z:[9,71,537,496,193]},
+  {m:'2026-04', z:[9,41,384,527,169]}, {m:'2026-05', z:[16,77,333,674,298]}, {m:'2026-06', z:[5,30,183,237,39]},
+  {m:'2026-07', z:[3,20,108,181,20]},
+];
+
+// "Idag" är fixerat till byggdatumet i den statiska versionen (inte enhetens klocka),
+// så nedräkning och markerad vecka alltid matchar innehållet nedan.
+const BUILD_DATE = new Date('2026-07-17T00:00:00');
+
+function daysBetween(a,b){ return Math.ceil((b-a)/86400000); }
+(function renderCountdown(){
+  const today = BUILD_DATE;
+  const race = new Date('2026-10-03T00:00:00');
+  const test10k = new Date('2026-09-19T00:00:00');
+  const daysToRace = daysBetween(today, race);
+  const daysToTest = daysBetween(today, test10k);
+  const cur = planWeeks.find(w => {
+    const s = new Date(w.start+'T00:00:00');
+    const e = new Date(s); e.setDate(e.getDate()+7);
+    return today>=s && today<e;
+  });
+  document.getElementById('countdownCards').innerHTML = `
+    <div class="card"><div class="label">Dagar till Malmö halvmara</div><div class="value">${daysToRace}</div><div class="note">3 okt 2026 · sub 1:24</div></div>
+    <div class="card"><div class="label">Dagar till 10k-test</div><div class="value">${daysToTest}</div><div class="note">~19 sep · sub 39:00</div></div>
+    <div class="card"><div class="label">Aktuell vecka (17 jul)</div><div class="value">${cur ? 'v.'+cur.n+' / 13' : '–'}</div><div class="note">${cur ? cur.dates : ''}</div></div>
+  `;
+})();
+
+(function renderPlan(){
+  const today = BUILD_DATE;
+  const tbody = document.getElementById('planTbody');
+  let curFocus = '';
+  tbody.innerHTML = planWeeks.map(w => {
+    const s = new Date(w.start+'T00:00:00');
+    const e = new Date(s); e.setDate(e.getDate()+7);
+    const isCurrent = today>=s && today<e;
+    if(isCurrent) curFocus = `Vecka ${w.n} (${w.dates}): ${w.focus}`;
+    return `<tr class="${isCurrent?'current-week':''}">
+      <td>v.${w.n}<br><span class="muted">${w.dates}</span></td>
+      ${w.d.map(x=>`<td>${x}</td>`).join('')}
+      <td>${w.vol}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('planFocusNote').textContent = curFocus ? ('Fokus denna vecka: ' + curFocus) : '';
+})();
+
+window.addEventListener('load', function(){
+  const vctx = document.getElementById('vo2Chart');
+  window.vo2ChartInstance = new Chart(vctx, {
+    type: 'line',
+    data: { labels: vo2History.map(x=>x[0]), datasets: [{ label:'VO2max', data: vo2History.map(x=>x[1]),
+      borderColor:'#c1622d', backgroundColor:'rgba(193,98,45,0.1)', fill:true, tension:0.25, pointRadius:3 }] },
+    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{min:50,max:65,title:{display:true,text:'VO2max'}} }, plugins:{ legend:{display:false} } }
+  });
+
+  const zctx = document.getElementById('zoneChart');
+  const colors = ['#9fb8a8','#6fa08a','#d9a441','#c1622d','#8a2f1f'];
+  const labels = ['Zon 1','Zon 2','Zon 3','Zon 4','Zon 5'];
+  window.zoneChartInstance = new Chart(zctx, {
+    type: 'bar',
+    data: { labels: zoneHistory.map(x=>x.m), datasets: labels.map((lab,i)=>({ label:lab, data: zoneHistory.map(x=>x.z[i]), backgroundColor: colors[i] })) },
+    options: { responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true,title:{display:true,text:'Minuter'}} }, plugins:{ legend:{position:'bottom'} } }
+  });
+});
+</script>
+</body>
+</html>
