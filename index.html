@@ -176,6 +176,39 @@
   .ask-form button[type="submit"]:hover { background:#152719; }
   .ask-note { font-size:11.5px; color:var(--muted); }
 
+  .fragor-intro { max-width:640px; margin-bottom:8px; }
+  .qa-count { font-size:12px; color:var(--muted); margin:-6px 0 18px 0; }
+  .qa-item { margin-bottom:26px; }
+  .qa-question {
+    background:var(--green-bg); border:1px solid var(--green-soft); border-left:4px solid var(--green);
+    border-radius:14px 14px 0 0; padding:16px 20px 14px 20px; position:relative;
+  }
+  .qa-question .qa-asker {
+    display:block; font-size:11px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;
+    color:var(--green-soft); margin-bottom:5px;
+  }
+  .qa-question .qa-text { font-size:15px; font-weight:600; color:#152719; line-height:1.5; }
+  .qa-answer {
+    background:#fff; border:1px solid var(--border); border-left:4px solid var(--gold);
+    border-top:none; border-radius:0 0 14px 14px; padding:20px 22px; margin-top:0;
+  }
+  .qa-answer .qa-answer-label {
+    display:flex; align-items:center; gap:6px; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+    font-weight:700; color:var(--gold); margin-bottom:10px;
+  }
+  .qa-answer .qa-answer-label svg { width:16px; height:16px; }
+  .qa-answer h4 { margin:16px 0 6px 0; font-size:13.5px; color:var(--green); text-transform:uppercase; letter-spacing:.02em; }
+  .qa-answer h4:first-of-type { margin-top:2px; }
+  .qa-answer p { margin:4px 0; font-size:13.8px; }
+  .qa-verdict {
+    background:var(--yellow-bg); border:1px solid #e9d9a8; border-left:4px solid var(--yellow); border-radius:8px;
+    padding:12px 16px; margin-top:14px; font-size:13.8px;
+  }
+  .qa-verdict strong { color:var(--yellow); }
+  .qa-stats { display:flex; gap:20px; flex-wrap:wrap; margin:14px 0 2px 0; }
+  .qa-stats div { font-size:12px; color:var(--muted); }
+  .qa-stats div strong { display:block; color:var(--ink); font-size:13px; font-weight:600; }
+
   @media (max-width: 700px) {
     .hamburger { display:flex; }
     nav {
@@ -204,6 +237,7 @@
       <button data-tab="coaching"><svg class="nav-icon coach-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>Coaching</button>
       <button data-tab="analys"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Analys</button>
       <button data-tab="om"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></svg>Om Erik</button>
+      <button data-tab="fragor"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>Frågor</button>
     </nav>
   </div>
 </header>
@@ -551,8 +585,18 @@
     </tbody>
   </table>
 
+</section>
+
+<!-- FRÅGOR -->
+<section id="tab-fragor">
+  <div class="om-hero">
+    <div class="om-hero-text">
+      <h1 style="font-size:26px;">Frågor</h1>
+      <p class="fragor-intro muted">Nyfiken på ett träningsval, en siffra eller något annat på sajten? Skicka en fråga till Erik själv eller till Coach Claude — den landar direkt i Eriks mejl. Frågor och svar samlas i listan under formuläret.</p>
+    </div>
+  </div>
+
   <h2>Ställ en fråga</h2>
-  <p class="muted">Nyfiken på ett träningsval, en siffra eller något annat på sajten? Skicka en fråga till Erik själv eller till Coach Claude — den landar direkt i Eriks mejl.</p>
   <form class="ask-form" action="https://formsubmit.co/erik.hammarstrom@antrop.se" method="POST">
     <input type="hidden" name="_subject" value="Ny fråga från Allt om min löpning">
     <input type="hidden" name="_template" value="table">
@@ -570,6 +614,35 @@
     <button type="submit">Skicka fråga</button>
     <p class="ask-note">Frågor skickas som mejl via tjänsten FormSubmit — inget konto eller login krävs för dig som frågar.</p>
   </form>
+
+  <h2>Frågor &amp; svar</h2>
+  <p class="qa-count muted">1 fråga hittills</p>
+
+  <div class="qa-item">
+    <div class="qa-question">
+      <span class="qa-asker">Från Empa</span>
+      <div class="qa-text">Om Erik springer Stockholm Maraton 2027 istället för Hannover, hur tror du att han kommer prestera under loppet förutsatt att han följer träningsplanen gediget?</div>
+    </div>
+    <div class="qa-answer">
+      <div class="qa-answer-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>Coach Claude svarar</div>
+
+      <div class="qa-stats">
+        <div>Hannover<strong>Flack, april, 4–17°C</strong></div>
+        <div>Stockholm<strong>Kuperad, slutet maj, upp mot 25–30°C</strong></div>
+      </div>
+
+      <h4>Hannover (nuvarande plan)</h4>
+      <p>Pannkaksflat bana (~20 m höjdskillnad) i svalt aprilväder. En ren PB-bana där bara det jämna tempot avgör — bra underlag för ett sub-3:00-försök rent fysiologiskt.</p>
+
+      <h4>Stockholm i stället</h4>
+      <p>Körs betydligt senare på säsongen med klart större värmerisk. Banan är dessutom kuperad snarare än flat — bland annat Västerbron och en lång stigning på Narvavägen som möter löparna igen efter cirka 40 km, precis när glykogenet är slut. Två varv genom stan kan också kännas mentalt tyngre än en rak bana.</p>
+
+      <div class="qa-verdict"><strong>Bedömning:</strong> Med samma gediget genomförda träningsplan tror jag ändå att Stockholm ger ett långsammare resultat än Hannover för samma form — troligen 1–3 minuter tappat på grund av backarna, plus ytterligare risk vid ett varmt lopp. Sub-3:00 blir en tightare marginal i Stockholm.</div>
+
+      <h4>Om Stockholm blir valet</h4>
+      <p>Då bör planen justeras med specifik backträning under uppbyggnadsfasen (simulera Narvavägen-stigningen sent i långpassen) och tydligt fokus på värmeacklimatisering sista veckorna — snarare än enbart platta tempopass optimerade för Hannover.</p>
+    </div>
+  </div>
 </section>
 
 </main>
@@ -583,7 +656,7 @@
 </footer>
 
 <script>
-const tabs = ['start','plan','coaching','analys','om'];
+const tabs = ['start','plan','coaching','analys','om','fragor'];
 const navEl = document.getElementById('nav');
 const hamburgerBtn = document.getElementById('hamburgerBtn');
 
