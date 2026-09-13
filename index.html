@@ -493,10 +493,11 @@
 <!-- ANALYS -->
 <section id="tab-analys">
   <h2><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>Analys — VO2max &amp; pulszoner</h2>
-  <p class="muted">Djupdykning i två nyckelmått över tid. Växla mellan flikarna.</p>
+  <p class="muted">Djupdykning i tre nyckelmått över tid. Växla mellan flikarna.</p>
   <div class="flex" style="margin-bottom:10px;">
     <button class="view-toggle active" id="vo2ViewBtn">VO2max-utveckling</button>
     <button class="view-toggle" id="zonerViewBtn">Tempo i pulszoner</button>
+    <button class="view-toggle" id="passtyperViewBtn">Tempo &amp; puls per passtyp</button>
   </div>
 
   <div id="vo2Panel" class="view-block active">
@@ -550,6 +551,18 @@
         <tr><td>2026-09-07</td><td>Lugn testrunda (hälsena-check)</td><td>6,08 km</td><td>4:47/km</td><td>141</td><td>AEROBIC_BASE</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <div id="passtyperPanel" class="view-block">
+    <p class="muted">Tempo och puls för lugna pass, tröskel/kvalpass och långpass, vecka för vecka sedan blockstart (6 jul 2026). Källa: veckoavstämningarna i <span class="pill">03_Veckoavstamningar/aktuell_form_och_troskeltempo.md</span>. Veckor utan pass av en viss typ (t.ex. v.9, hälsenapaus) visas som luckor i linjen.</p>
+
+    <h3>Tempo per passtyp</h3>
+    <div class="chart-wrap"><canvas id="paceTypeChart"></canvas></div>
+
+    <h3>Puls per passtyp</h3>
+    <div class="chart-wrap"><canvas id="hrTypeChart"></canvas></div>
+
+    <p class="muted" style="margin-top:10px;">Lugnt tempo har sakta krupit ner (~5:00/km i v.1–4 mot 4:48/km i v.8) samtidigt som pulsen legat still eller sjunkit något (137–144 → 136–139) — ett genuint konditionstecken, snabbare för samma eller lägre puls. Tröskeltempot hålls medvetet konstant i bandet 3:58–4:08/km hela blocket (autoreglerat på puls, inte progressivt snabbare) — förbättringen syns i stället indirekt via VO2max, som fortsatt krypa uppåt under samma period. Långpassets distans har vuxit rejält (14→22 km) medan pulsen knappt rört sig — bra uthållighetstecken. v.2:s låga lugna puls (128) berodde på svalare väder; v.5:s lugna pass var klart långsammare än omgivande veckor och inte jämförbart. v.9–10 saknar/har begränsad tröskel- och långpassdata pga hälsena-pausen.</p>
   </div>
 
   <p class="footer-note">Detta är en statisk, delbar version av löpstatus-sajten — byggd 13 september 2026. Alla siffror (plan, veckoavstämning och Garmin-nyckeltal) är en ögonblicksbild från byggtillfället och uppdateras inte automatiskt. Be Claude bygga om filen när du vill ha en ny version.</p>
@@ -679,7 +692,7 @@
   <div class="site-footer-inner">
     <p style="color:var(--cream-text); font-weight:700; font-size:14px;"><svg class="coach-footer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>Coach Claude</p>
     <p>Analyserna på den här sajten görs av Claude (Anthropic) — baserat på data från Garmin (träningsstatus, VO2max, HRV, vilopuls, sömn och belastning) och Strava (aktiviteter och personbästa), tolkat tillsammans med Eriks egna kommentarer vid varje veckoavstämning. Mönsterigenkänning i data, inte medicinsk rådgivning.</p>
-    <p>Statisk ögonblicksbild, byggd 7 september 2026.</p>
+    <p>Statisk ögonblicksbild, byggd 13 september 2026.</p>
   </div>
 </footer>
 
@@ -696,10 +709,14 @@ function showTab(name){
 }
 function resizeVisibleAnalysisChart(){
   const vo2Panel = document.getElementById('vo2Panel');
+  const zonerPanel = document.getElementById('zonerPanel');
   if(vo2Panel && vo2Panel.classList.contains('active')){
     if(window.vo2ChartInstance) window.vo2ChartInstance.resize();
-  } else if(window.zoneChartInstance) {
-    window.zoneChartInstance.resize();
+  } else if(zonerPanel && zonerPanel.classList.contains('active')){
+    if(window.zoneChartInstance) window.zoneChartInstance.resize();
+  } else {
+    if(window.paceTypeChartInstance) window.paceTypeChartInstance.resize();
+    if(window.hrTypeChartInstance) window.hrTypeChartInstance.resize();
   }
 }
 navEl.addEventListener('click', e => {
@@ -712,17 +729,22 @@ document.querySelectorAll('a.navlink[data-tab]').forEach(a => a.addEventListener
 // Analyssegment: VO2max / Pulszoner toggle
 const vo2ViewBtn = document.getElementById('vo2ViewBtn');
 const zonerViewBtn = document.getElementById('zonerViewBtn');
+const passtyperViewBtn = document.getElementById('passtyperViewBtn');
 const vo2Panel = document.getElementById('vo2Panel');
 const zonerPanel = document.getElementById('zonerPanel');
+const passtyperPanel = document.getElementById('passtyperPanel');
 function switchAnalysisView(v){
   vo2Panel.classList.toggle('active', v==='vo2');
   zonerPanel.classList.toggle('active', v==='zoner');
+  passtyperPanel.classList.toggle('active', v==='passtyper');
   vo2ViewBtn.classList.toggle('active', v==='vo2');
   zonerViewBtn.classList.toggle('active', v==='zoner');
+  passtyperViewBtn.classList.toggle('active', v==='passtyper');
   resizeVisibleAnalysisChart();
 }
 vo2ViewBtn.addEventListener('click', () => switchAnalysisView('vo2'));
 zonerViewBtn.addEventListener('click', () => switchAnalysisView('zoner'));
+passtyperViewBtn.addEventListener('click', () => switchAnalysisView('passtyper'));
 
 // Info-ikoner med förklarande popup
 document.addEventListener('click', function(e){
@@ -897,6 +919,20 @@ const zoneHistory = [
   {m:'2026-07', z:[8,50,403,491,115]}, {m:'2026-08', z:[12,48,599,529,176]},
 ];
 
+// Tempo (min/km, decimalt) och puls per passtyp, vecka för vecka sedan blockstart (6 jul 2026).
+// null = ingen jämförbar data den veckan (inget pass, eller bara ett segment/test utan tydligt heltäckande värde).
+const weekLabels10 = ['v.1','v.2','v.3','v.4','v.5','v.6','v.7','v.8','v.9','v.10'];
+const paceByType = {
+  lugnt:    [4.983, 4.983, 4.967, 5.017, 5.267, 5.000, 5.033, 4.800, null,  4.917],
+  trosk:    [null,  null,  4.075, 4.033, 4.017, 4.025, 3.892, 3.817, 4.017, 4.000],
+  lang:     [4.983, 4.867, 4.850, 4.867, null,  null,  4.900, 4.933, null,  4.800],
+};
+const hrByType = {
+  lugnt:    [141, 128, 138, 144, 138, 132, 133, 139, null, 137],
+  trosk:    [null, null, 151, 154, 154, 151, 150.5, 148, 156, 147.5],
+  lang:     [137, 131, 142, 137, null, 144, 137, 136, null, 137],
+};
+
 const BUILD_DATE = new Date('2026-09-13T00:00:00');
 
 function daysBetween(a,b){ return Math.ceil((b-a)/86400000); }
@@ -987,6 +1023,42 @@ window.addEventListener('load', function(){
     type: 'bar',
     data: { labels: zoneHistory.map(x=>x.m), datasets: labels.map((lab,i)=>({ label:lab, data: zoneHistory.map(x=>x.z[i]), backgroundColor: colors[i] })) },
     options: { responsive:true, maintainAspectRatio:false, scales:{ x:{stacked:true}, y:{stacked:true,title:{display:true,text:'Minuter'}} }, plugins:{ legend:{position:'bottom'} } }
+  });
+
+  // Formatterar decimaltempo (t.ex. 4.983) till min:sek/km (t.ex. "4:59") för tooltip/axel
+  function fmtPace(v){
+    if(v===null || v===undefined || isNaN(v)) return '–';
+    const min = Math.floor(v);
+    const sec = Math.round((v-min)*60);
+    return min+':'+String(sec).padStart(2,'0');
+  }
+
+  const pctx = document.getElementById('paceTypeChart');
+  window.paceTypeChartInstance = new Chart(pctx, {
+    type: 'line',
+    data: { labels: weekLabels10, datasets: [
+      { label:'Lugnt', data: paceByType.lugnt, borderColor:'#3F6D51', backgroundColor:'#3F6D51', spanGaps:true, tension:0.25, pointRadius:3 },
+      { label:'Tröskel/kvalpass', data: paceByType.trosk, borderColor:'#B8905A', backgroundColor:'#B8905A', spanGaps:true, tension:0.25, pointRadius:3 },
+      { label:'Långpass', data: paceByType.lang, borderColor:'#8a2f1f', backgroundColor:'#8a2f1f', spanGaps:true, tension:0.25, pointRadius:3 },
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ reverse:true, title:{display:true,text:'min/km (lägre = snabbare)'}, ticks:{ callback:v=>fmtPace(v) } } },
+      plugins:{ legend:{position:'bottom'}, tooltip:{ callbacks:{ label:ctx => ctx.dataset.label+': '+fmtPace(ctx.parsed.y)+'/km' } } }
+    }
+  });
+
+  const hctx = document.getElementById('hrTypeChart');
+  window.hrTypeChartInstance = new Chart(hctx, {
+    type: 'line',
+    data: { labels: weekLabels10, datasets: [
+      { label:'Lugnt', data: hrByType.lugnt, borderColor:'#3F6D51', backgroundColor:'#3F6D51', spanGaps:true, tension:0.25, pointRadius:3 },
+      { label:'Tröskel/kvalpass', data: hrByType.trosk, borderColor:'#B8905A', backgroundColor:'#B8905A', spanGaps:true, tension:0.25, pointRadius:3 },
+      { label:'Långpass', data: hrByType.lang, borderColor:'#8a2f1f', backgroundColor:'#8a2f1f', spanGaps:true, tension:0.25, pointRadius:3 },
+    ]},
+    options: { responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ title:{display:true,text:'Snittpuls (bpm)'} } },
+      plugins:{ legend:{position:'bottom'} }
+    }
   });
 });
 </script>
